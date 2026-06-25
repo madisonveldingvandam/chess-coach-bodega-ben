@@ -114,6 +114,7 @@ if (!app) {
 }
 
 let board: any = null;
+let entryBoard: any = null;
 let activePayload: DashboardPayload | null = null;
 
 app.innerHTML = `
@@ -125,10 +126,10 @@ app.innerHTML = `
         <div class="brand-sub">Chess.com analytics</div>
       </div>
     </div>
-    <form id="analysis-form" class="analysis-form">
+    <form class="analysis-form topbar-form" data-analysis-form hidden>
       <label class="handle-field">
         <span>Handle</span>
-        <input id="username" name="username" autocomplete="off" spellcheck="false" placeholder="Chess.com username" required />
+        <input name="username" autocomplete="off" spellcheck="false" placeholder="Chess.com username" required />
       </label>
       <fieldset class="segment" aria-label="Time class">
         ${(['bullet', 'blitz', 'rapid', 'daily'] as TimeClass[])
@@ -142,87 +143,134 @@ app.innerHTML = `
       </fieldset>
       <label class="months-field">
         <span>Months</span>
-        <input id="max-archives" name="max_archives" type="number" min="1" max="36" value="3" />
+        <input name="max_archives" type="number" min="1" max="36" value="3" />
       </label>
-      <button id="submit-button" class="primary-button" type="submit">Analyze</button>
+      <button class="primary-button" type="submit">Analyze</button>
     </form>
   </header>
 
   <main class="shell">
-    <section class="status-band" id="status-band">
-      <div>
-        <h1>Enter a handle</h1>
-        <p id="status-copy">Ready for a public Chess.com profile.</p>
+    <section class="entry-view" id="entry-view">
+      <div class="entry-panel">
+        <div class="entry-copy">
+          <p class="eyebrow">Public Chess.com analysis</p>
+          <h1>Start with a Chess.com username.</h1>
+          <p>Generate a coaching dashboard from public games: ratings, form, openings, recent losses, process signals, and study priorities.</p>
+        </div>
+        <form class="entry-form" data-analysis-form>
+          <label class="entry-handle">
+            <span>Chess.com handle</span>
+            <input name="username" autocomplete="off" spellcheck="false" placeholder="e.g. M_V-V" required autofocus />
+          </label>
+          <fieldset class="segment entry-segment" aria-label="Time class">
+            ${(['bullet', 'blitz', 'rapid', 'daily'] as TimeClass[])
+              .map((item) => `
+                <label>
+                  <input type="radio" name="time_class" value="${item}" ${item === 'bullet' ? 'checked' : ''} />
+                  <span>${titleCase(item)}</span>
+                </label>
+              `)
+              .join('')}
+          </fieldset>
+          <div class="entry-actions">
+            <label class="months-field">
+              <span>Months</span>
+              <input name="max_archives" type="number" min="1" max="36" value="3" />
+            </label>
+            <button class="primary-button entry-button" type="submit">Analyze player</button>
+          </div>
+        </form>
+        <div class="entry-signals">
+          <span>Ratings</span>
+          <span>Openings</span>
+          <span>Recent losses</span>
+          <span>Recommendations</span>
+        </div>
       </div>
-      <div class="status-meta" id="status-meta"></div>
+      <aside class="entry-board-wrap">
+        <div id="entry-board" class="entry-board"></div>
+        <div class="entry-board-meta">
+          <strong>Observed repertoire first.</strong>
+          <span>Plans and Stockfish can come later.</span>
+        </div>
+      </aside>
     </section>
 
-    <section class="kpi-grid" id="kpi-grid"></section>
+    <section id="dashboard-view" class="dashboard-view" hidden>
+      <section class="status-band" id="status-band">
+        <div>
+          <h1>Analyzing</h1>
+          <p id="status-copy">Preparing dashboard.</p>
+        </div>
+        <div class="status-meta" id="status-meta"></div>
+      </section>
 
-    <section class="main-grid">
-      <div class="left-flow">
-        <section class="panel">
-          <div class="panel-head">
-            <h2>Recommendations</h2>
-            <span id="recommendation-count"></span>
-          </div>
-          <div class="recommendations" id="recommendations"></div>
-        </section>
+      <section class="kpi-grid" id="kpi-grid"></section>
 
-        <section class="panel">
-          <div class="panel-head">
-            <h2>Opening families</h2>
-            <div class="table-tools">
-              <button class="side-filter active" data-side="all" type="button">All</button>
-              <button class="side-filter" data-side="white" type="button">White</button>
-              <button class="side-filter" data-side="black" type="button">Black</button>
+      <section class="main-grid">
+        <div class="left-flow">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Recommendations</h2>
+              <span id="recommendation-count"></span>
             </div>
-          </div>
-          <div class="opening-table" id="opening-table"></div>
-        </section>
+            <div class="recommendations" id="recommendations"></div>
+          </section>
 
-        <section class="panel">
-          <div class="panel-head">
-            <h2>Recent losses</h2>
-            <span id="loss-count"></span>
-          </div>
-          <div class="loss-list" id="loss-list"></div>
-        </section>
-      </div>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Opening families</h2>
+              <div class="table-tools">
+                <button class="side-filter active" data-side="all" type="button">All</button>
+                <button class="side-filter" data-side="white" type="button">White</button>
+                <button class="side-filter" data-side="black" type="button">Black</button>
+              </div>
+            </div>
+            <div class="opening-table" id="opening-table"></div>
+          </section>
 
-      <aside class="right-rail">
-        <section class="board-section">
-          <div id="board" class="board"></div>
-          <div id="board-meta" class="board-meta">Observed openings will appear here.</div>
-        </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Recent losses</h2>
+              <span id="loss-count"></span>
+            </div>
+            <div class="loss-list" id="loss-list"></div>
+          </section>
+        </div>
 
-        <section class="panel compact">
-          <div class="panel-head">
-            <h2>Behavior</h2>
-          </div>
-          <div class="behavior-grid" id="behavior-grid"></div>
-        </section>
+        <aside class="right-rail">
+          <section class="board-section">
+            <div id="board" class="board"></div>
+            <div id="board-meta" class="board-meta">Observed openings will appear here.</div>
+          </section>
 
-        <section class="panel compact">
-          <div class="panel-head">
-            <h2>Sessions</h2>
-          </div>
-          <div class="session-list" id="session-list"></div>
-        </section>
-      </aside>
+          <section class="panel compact">
+            <div class="panel-head">
+              <h2>Behavior</h2>
+            </div>
+            <div class="behavior-grid" id="behavior-grid"></div>
+          </section>
+
+          <section class="panel compact">
+            <div class="panel-head">
+              <h2>Sessions</h2>
+            </div>
+            <div class="session-list" id="session-list"></div>
+          </section>
+        </aside>
+      </section>
     </section>
   </main>
 `;
 
-initializeBoard(START_FEN, 'white');
-wireForm();
+entryBoard = createBoard('entry-board', START_FEN, 'white');
+wireForms();
 wireSideFilters();
-renderEmptyState();
 
-function initializeBoard(fen: string, orientation: 'white' | 'black') {
-  const boardEl = document.querySelector<HTMLElement>('#board');
+function createBoard(elementId: string, fen: string, orientation: 'white' | 'black') {
+  const boardEl = document.querySelector<HTMLElement>(`#${elementId}`);
   if (!boardEl) return;
-  board = Chessground(boardEl, {
+  return Chessground(boardEl, {
     fen,
     orientation,
     coordinates: true,
@@ -233,17 +281,24 @@ function initializeBoard(fen: string, orientation: 'white' | 'black') {
   });
 }
 
-function wireForm() {
-  const form = document.querySelector<HTMLFormElement>('#analysis-form');
-  if (!form) return;
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const formData = new FormData(form);
-    const username = String(formData.get('username') || '').trim();
-    const timeClass = String(formData.get('time_class') || 'bullet') as TimeClass;
-    const maxArchives = Number(formData.get('max_archives') || 3);
-    if (!username) return;
-    await startAnalysis(username, timeClass, maxArchives);
+function ensureDashboardBoard() {
+  if (!board) {
+    board = createBoard('board', START_FEN, 'white');
+  }
+}
+
+function wireForms() {
+  document.querySelectorAll<HTMLFormElement>('[data-analysis-form]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const username = String(formData.get('username') || '').trim();
+      const timeClass = String(formData.get('time_class') || 'bullet') as TimeClass;
+      const maxArchives = Number(formData.get('max_archives') || 3);
+      if (!username) return;
+      syncForms(username, timeClass, maxArchives);
+      await startAnalysis(username, timeClass, maxArchives);
+    });
   });
 }
 
@@ -259,6 +314,8 @@ function wireSideFilters() {
 
 async function startAnalysis(username: string, timeClass: TimeClass, maxArchives: number) {
   setBusy(true);
+  showDashboardView();
+  renderLoadingState();
   setStatus('Analyzing', `Queued ${username} ${timeClass} analysis.`, '');
   try {
     const response = await fetch('/api/analyses', {
@@ -304,6 +361,7 @@ async function pollJob(jobId: string) {
 }
 
 function renderDashboard(payload: DashboardPayload) {
+  showDashboardView();
   setStatus(`${payload.username} ${titleCase(payload.time_class)}`, 'Dashboard generated from public Chess.com games.', payload.source.profile_url);
   renderKpis(payload);
   renderRecommendations(payload);
@@ -318,13 +376,13 @@ function renderDashboard(payload: DashboardPayload) {
   }
 }
 
-function renderEmptyState() {
+function renderLoadingState() {
   const kpiGrid = document.querySelector('#kpi-grid');
   if (kpiGrid) {
     kpiGrid.innerHTML = [
-      kpiCard('Rating', '--', 'Current'),
-      kpiCard('Recent form', '--', 'Last 20'),
-      kpiCard('Games', '--', 'Selected archives'),
+      kpiCard('Rating', '--', 'Fetching'),
+      kpiCard('Recent form', '--', 'Computing'),
+      kpiCard('Games', '--', 'Parsing archives'),
       kpiCard('Move quality', 'Deferred', 'Stockfish optional')
     ].join('');
   }
@@ -338,6 +396,15 @@ function renderEmptyState() {
   if (behavior) behavior.innerHTML = '';
   const sessions = document.querySelector('#session-list');
   if (sessions) sessions.innerHTML = '';
+  const recommendationCount = document.querySelector('#recommendation-count');
+  if (recommendationCount) recommendationCount.textContent = '';
+  const lossCount = document.querySelector('#loss-count');
+  if (lossCount) lossCount.textContent = '';
+  const boardMeta = document.querySelector('#board-meta');
+  if (boardMeta) boardMeta.textContent = 'Opening board will populate when the analysis completes.';
+  if (board?.set) {
+    board.set({ fen: START_FEN, orientation: 'white' });
+  }
 }
 
 function renderKpis(payload: DashboardPayload) {
@@ -504,10 +571,33 @@ function setStatus(title: string, copy: string, profileUrl: string) {
 }
 
 function setBusy(isBusy: boolean) {
-  const button = document.querySelector<HTMLButtonElement>('#submit-button');
-  if (!button) return;
-  button.disabled = isBusy;
-  button.textContent = isBusy ? 'Running' : 'Analyze';
+  document.querySelectorAll<HTMLButtonElement>('[data-analysis-form] button[type="submit"]').forEach((button) => {
+    button.disabled = isBusy;
+    button.textContent = isBusy
+      ? 'Running'
+      : button.classList.contains('entry-button') ? 'Analyze player' : 'Analyze';
+  });
+}
+
+function showDashboardView() {
+  const entryView = document.querySelector<HTMLElement>('#entry-view');
+  const dashboardView = document.querySelector<HTMLElement>('#dashboard-view');
+  const topbarForm = document.querySelector<HTMLFormElement>('.topbar-form');
+  if (entryView) entryView.hidden = true;
+  if (dashboardView) dashboardView.hidden = false;
+  if (topbarForm) topbarForm.hidden = false;
+  ensureDashboardBoard();
+}
+
+function syncForms(username: string, timeClass: TimeClass, maxArchives: number) {
+  document.querySelectorAll<HTMLFormElement>('[data-analysis-form]').forEach((form) => {
+    const usernameInput = form.querySelector<HTMLInputElement>('input[name="username"]');
+    const monthsInput = form.querySelector<HTMLInputElement>('input[name="max_archives"]');
+    const timeInput = form.querySelector<HTMLInputElement>(`input[name="time_class"][value="${timeClass}"]`);
+    if (usernameInput) usernameInput.value = username;
+    if (monthsInput) monthsInput.value = String(maxArchives);
+    if (timeInput) timeInput.checked = true;
+  });
 }
 
 function activeSideFilter() {
