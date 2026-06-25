@@ -12,7 +12,7 @@ from .config import FRONTEND_DIST, TIME_CLASSES
 from .jobs import JobManager
 
 
-app = FastAPI(title="Chess Coach API", version="0.1.0")
+app = FastAPI(title="Bodega Ben Chess Dashboard API", version="0.1.0")
 jobs = JobManager()
 
 app.add_middleware(
@@ -78,9 +78,9 @@ def index():
     return HTMLResponse(
         """
         <!doctype html>
-        <title>Chess Coach</title>
+        <title>Bodega Ben Chess Dashboard</title>
         <main style="font-family: system-ui; padding: 2rem; max-width: 720px">
-          <h1>Chess Coach API is running</h1>
+          <h1>Bodega Ben Chess Dashboard API is running</h1>
           <p>Build the frontend with <code>cd frontend && npm run build</code>,
           or run Vite at <code>http://localhost:5173</code>.</p>
         </main>

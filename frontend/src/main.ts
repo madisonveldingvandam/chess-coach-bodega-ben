@@ -107,6 +107,12 @@ type Recommendation = {
 };
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const DEFAULT_USERNAME = 'bodegaben';
+const PLAYER_DISPLAY_NAME = 'Bodega Ben';
+const PLAYER_PROFILE_URL = 'https://www.chess.com/member/bodegaben';
+const DEFAULT_TIME_CLASS: TimeClass = 'blitz';
+const DEFAULT_ARCHIVE_MONTHS = 6;
+const TIME_CLASSES: TimeClass[] = ['bullet', 'blitz', 'rapid', 'daily'];
 
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) {
@@ -120,22 +126,22 @@ let activePayload: DashboardPayload | null = null;
 app.innerHTML = `
   <header class="topbar">
     <div class="brand">
-      <div class="brand-mark">Cc</div>
+      <div class="brand-mark">Bb</div>
       <div>
-        <div class="brand-name">Chess Coach</div>
+        <div class="brand-name">${PLAYER_DISPLAY_NAME}</div>
         <div class="brand-sub">Chess.com analytics</div>
       </div>
     </div>
     <form class="analysis-form topbar-form" data-analysis-form hidden>
       <label class="handle-field">
         <span>Handle</span>
-        <input name="username" autocomplete="off" spellcheck="false" placeholder="Chess.com username" required />
+        <input name="username" autocomplete="off" spellcheck="false" value="${DEFAULT_USERNAME}" placeholder="${DEFAULT_USERNAME}" required />
       </label>
       <fieldset class="segment" aria-label="Time class">
-        ${(['bullet', 'blitz', 'rapid', 'daily'] as TimeClass[])
+        ${TIME_CLASSES
           .map((item) => `
             <label>
-              <input type="radio" name="time_class" value="${item}" ${item === 'bullet' ? 'checked' : ''} />
+              <input type="radio" name="time_class" value="${item}" ${item === DEFAULT_TIME_CLASS ? 'checked' : ''} />
               <span>${titleCase(item)}</span>
             </label>
           `)
@@ -143,7 +149,7 @@ app.innerHTML = `
       </fieldset>
       <label class="months-field">
         <span>Months</span>
-        <input name="max_archives" type="number" min="1" max="36" value="3" />
+        <input name="max_archives" type="number" min="1" max="36" value="${DEFAULT_ARCHIVE_MONTHS}" />
       </label>
       <button class="primary-button" type="submit">Analyze</button>
     </form>
@@ -153,20 +159,20 @@ app.innerHTML = `
     <section class="entry-view" id="entry-view">
       <div class="entry-panel">
         <div class="entry-copy">
-          <p class="eyebrow">Chess Coach</p>
-          <h1>Analyze a Chess.com handle.</h1>
-          <p>Enter a public username to build the dashboard.</p>
+          <p class="eyebrow">${DEFAULT_USERNAME}</p>
+          <h1>${PLAYER_DISPLAY_NAME} chess dashboard.</h1>
+          <p>Start with Bodega Ben's public Chess.com games, or enter another handle.</p>
         </div>
         <form class="entry-form" data-analysis-form>
           <label class="entry-handle">
             <span>Chess.com handle</span>
-            <input name="username" autocomplete="off" spellcheck="false" placeholder="e.g. M_V-V" required autofocus />
+            <input name="username" autocomplete="off" spellcheck="false" value="${DEFAULT_USERNAME}" placeholder="${DEFAULT_USERNAME}" required autofocus />
           </label>
           <fieldset class="segment entry-segment" aria-label="Time class">
-            ${(['bullet', 'blitz', 'rapid', 'daily'] as TimeClass[])
+            ${TIME_CLASSES
               .map((item) => `
                 <label>
-                  <input type="radio" name="time_class" value="${item}" ${item === 'bullet' ? 'checked' : ''} />
+                  <input type="radio" name="time_class" value="${item}" ${item === DEFAULT_TIME_CLASS ? 'checked' : ''} />
                   <span>${titleCase(item)}</span>
                 </label>
               `)
@@ -175,7 +181,7 @@ app.innerHTML = `
           <div class="entry-actions">
             <label class="months-field">
               <span>Months</span>
-              <input name="max_archives" type="number" min="1" max="36" value="3" />
+              <input name="max_archives" type="number" min="1" max="36" value="${DEFAULT_ARCHIVE_MONTHS}" />
             </label>
             <button class="primary-button entry-button" type="submit">Analyze player</button>
           </div>
@@ -190,8 +196,8 @@ app.innerHTML = `
       <aside class="entry-board-wrap">
         <div id="entry-board" class="entry-board"></div>
         <div class="entry-board-meta">
-          <strong>Observed repertoire first.</strong>
-          <span>Plans and Stockfish can come later.</span>
+          <strong>${PLAYER_DISPLAY_NAME}</strong>
+          <a href="${PLAYER_PROFILE_URL}" target="_blank" rel="noopener">Chess.com profile</a>
         </div>
       </aside>
     </section>
@@ -294,7 +300,7 @@ function wireForms() {
       const formData = new FormData(form);
       const username = String(formData.get('username') || '').trim();
       const timeClass = String(formData.get('time_class') || 'bullet') as TimeClass;
-      const maxArchives = Number(formData.get('max_archives') || 3);
+      const maxArchives = Number(formData.get('max_archives') || DEFAULT_ARCHIVE_MONTHS);
       if (!username) return;
       syncForms(username, timeClass, maxArchives);
       await startAnalysis(username, timeClass, maxArchives);
@@ -316,7 +322,7 @@ async function startAnalysis(username: string, timeClass: TimeClass, maxArchives
   setBusy(true);
   showDashboardView();
   renderLoadingState();
-  setStatus('Analyzing', `Queued ${username} ${timeClass} analysis.`, '');
+  setStatus('Analyzing', `Queued ${playerLabel(username)} ${timeClass} analysis.`, '');
   try {
     const response = await fetch('/api/analyses', {
       method: 'POST',
@@ -362,7 +368,7 @@ async function pollJob(jobId: string) {
 
 function renderDashboard(payload: DashboardPayload) {
   showDashboardView();
-  setStatus(`${payload.username} ${titleCase(payload.time_class)}`, 'Dashboard generated from public Chess.com games.', payload.source.profile_url);
+  setStatus(`${playerLabel(payload.username)} ${titleCase(payload.time_class)}`, 'Dashboard generated from public Chess.com games.', payload.source.profile_url);
   renderKpis(payload);
   renderRecommendations(payload);
   renderOpenings(payload, activeSideFilter());
@@ -612,6 +618,10 @@ function formStrip(form: string[]) {
 
 function titleCase(value: string) {
   return value.slice(0, 1).toUpperCase() + value.slice(1);
+}
+
+function playerLabel(username: string) {
+  return username.toLowerCase() === DEFAULT_USERNAME ? PLAYER_DISPLAY_NAME : username;
 }
 
 function formatSigned(value: number | null) {

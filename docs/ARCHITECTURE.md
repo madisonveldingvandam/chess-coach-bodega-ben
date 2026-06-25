@@ -2,12 +2,13 @@
 
 ## Product Boundary
 
-Chess Coach is a new standalone repo and app. It should continue to run if the
-old `chess-tracker` directory is deleted.
+`chess-coach-bodega-ben` is a new standalone repo and app. It should continue
+to run if the old `chess-tracker` directory is deleted.
 
-The MVP supports arbitrary public Chess.com usernames. It starts without
-accounts, payments, email, OAuth, a polished repertoire editor, or multi-user
-saved workspaces.
+The MVP is branded around Bodega Ben (`bodegaben`) and defaults to Blitz over a
+six-month sample while still supporting arbitrary public Chess.com usernames.
+It starts without accounts, payments, email, OAuth, a polished repertoire
+editor, or multi-user saved workspaces.
 
 ## Minimum Viable Stack
 

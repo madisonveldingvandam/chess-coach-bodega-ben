@@ -1,10 +1,15 @@
-# Chess Coach
+# chess-coach-bodega-ben
 
-General-purpose Chess.com analytics for coaching and self-review.
+Bodega Ben Chess.com analytics for coaching and self-review.
 
 This is a standalone project. It does not import, symlink, call, or depend on
 the older personal `chess-tracker` repo. The old project was inspected only as
 source material.
+
+The default player is [BODEGABEN](https://www.chess.com/member/bodegaben),
+shown in the app as Bodega Ben. The app starts on Blitz with a six-month sample
+because that is the useful public-game window for this player. The handle form
+still supports other public Chess.com usernames for comparison and testing.
 
 ## MVP Direction
 
@@ -87,7 +92,7 @@ npm run dev
 ```
 
 Open <http://localhost:5173>. The Vite dev server proxies `/api` to the FastAPI
-server.
+server and starts with `bodegaben` filled in.
 
 ## Test And Build
 

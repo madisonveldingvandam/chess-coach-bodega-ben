@@ -1,4 +1,4 @@
-"""Chess Coach backend package."""
+"""Bodega Ben chess dashboard backend package."""
 
 __all__ = ["__version__"]
 
