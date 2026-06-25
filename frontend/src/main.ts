@@ -153,9 +153,9 @@ app.innerHTML = `
     <section class="entry-view" id="entry-view">
       <div class="entry-panel">
         <div class="entry-copy">
-          <p class="eyebrow">Public Chess.com analysis</p>
-          <h1>Start with a Chess.com username.</h1>
-          <p>Generate a coaching dashboard from public games: ratings, form, openings, recent losses, process signals, and study priorities.</p>
+          <p class="eyebrow">Chess Coach</p>
+          <h1>Analyze a Chess.com handle.</h1>
+          <p>Enter a public username to build the dashboard.</p>
         </div>
         <form class="entry-form" data-analysis-form>
           <label class="entry-handle">
@@ -181,10 +181,10 @@ app.innerHTML = `
           </div>
         </form>
         <div class="entry-signals">
-          <span>Ratings</span>
-          <span>Openings</span>
-          <span>Recent losses</span>
-          <span>Recommendations</span>
+          <span><strong>Ratings</strong><small>Current</small></span>
+          <span><strong>Form</strong><small>Recent</small></span>
+          <span><strong>Openings</strong><small>Observed</small></span>
+          <span><strong>Losses</strong><small>Review</small></span>
         </div>
       </div>
       <aside class="entry-board-wrap">
