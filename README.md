@@ -113,8 +113,16 @@ Then open <http://localhost:8000>.
 
 ## Deploy
 
-The repo includes Docker and Render Blueprint config for a public FastAPI
-deployment:
+The primary public Bodega Ben site is deployed like the original
+`chess-tracker`: GitHub Actions generates static dashboard data and publishes
+`frontend/dist` to GitHub Pages.
+
+Expected Pages URL:
+
+<https://madisonveldingvandam.github.io/chess-coach-bodega-ben/>
+
+The repo also includes Docker and Render Blueprint config for a public FastAPI
+deployment when arbitrary live-handle analysis is needed:
 
 <https://render.com/deploy?repo=https://github.com/madisonveldingvandam/chess-coach-bodega-ben>
 

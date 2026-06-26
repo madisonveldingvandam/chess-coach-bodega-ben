@@ -1,8 +1,31 @@
 # Deployment
 
+## GitHub Pages
+
+The public Bodega Ben site is designed to work like the original
+`chess-tracker` site: GitHub Actions refreshes public Chess.com data, builds a
+static dashboard, and deploys the finished frontend to GitHub Pages.
+
+Expected URL:
+
+https://madisonveldingvandam.github.io/chess-coach-bodega-ben/
+
+Workflow:
+
+- `.github/workflows/pages.yml`
+- Runs on push to `main`, every six hours, and manual dispatch.
+- Generates `frontend/public/data/default-dashboard.json` during the workflow.
+- Builds Vite with `VITE_BASE_PATH=/chess-coach-bodega-ben/`.
+- Uploads `frontend/dist` to GitHub Pages.
+
+The static Pages site is Bodega Ben-specific. It can show the live-handle form,
+but arbitrary handle analysis still requires the FastAPI backend deployment
+below.
+
 ## Render
 
-This repo is configured for a Docker-based Render web service.
+This repo is also configured for a Docker-based Render web service when live
+arbitrary-handle analysis is needed.
 
 Use this Blueprint link:
 

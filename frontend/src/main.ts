@@ -113,6 +113,7 @@ const PLAYER_PROFILE_URL = 'https://www.chess.com/member/bodegaben';
 const DEFAULT_TIME_CLASS: TimeClass = 'blitz';
 const DEFAULT_ARCHIVE_MONTHS = 6;
 const TIME_CLASSES: TimeClass[] = ['bullet', 'blitz', 'rapid', 'daily'];
+const STATIC_DASHBOARD_URL = `${import.meta.env.BASE_URL}data/default-dashboard.json`;
 
 const app = document.querySelector<HTMLDivElement>('#app');
 if (!app) {
@@ -122,6 +123,7 @@ if (!app) {
 let dashboardBoards: Partial<Record<'white' | 'black', any>> = {};
 let entryBoard: any = null;
 let activePayload: DashboardPayload | null = null;
+let staticPayload: DashboardPayload | null | undefined;
 
 app.innerHTML = `
   <header id="kpi-strip" class="kpi-strip">
@@ -259,6 +261,7 @@ app.innerHTML = `
 
 entryBoard = createBoard('entry-board', START_FEN, 'white');
 wireForms();
+hydrateStaticDashboard();
 
 function createBoard(elementId: string, fen: string, orientation: 'white' | 'black') {
   const boardEl = document.querySelector<HTMLElement>(`#${elementId}`);
@@ -304,6 +307,13 @@ async function startAnalysis(username: string, timeClass: TimeClass, maxArchives
   renderLoadingState();
   setStatus('Analyzing', `Queued ${playerLabel(username)} ${timeClass} analysis.`, '');
   try {
+    const staticDashboard = await loadStaticDashboard();
+    if (staticDashboard && isStaticDashboardRequest(staticDashboard, username, timeClass, maxArchives)) {
+      activePayload = staticDashboard;
+      renderDashboard(staticDashboard);
+      return;
+    }
+
     const response = await fetch('/api/analyses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -320,10 +330,54 @@ async function startAnalysis(username: string, timeClass: TimeClass, maxArchives
     const job = (await response.json()) as AnalysisJob;
     await pollJob(job.id);
   } catch (error) {
-    setStatus('Analysis failed', error instanceof Error ? error.message : String(error), '');
+    const staticDashboard = await loadStaticDashboard();
+    if (staticDashboard && isStaticDashboardRequest(staticDashboard, username, timeClass, maxArchives)) {
+      activePayload = staticDashboard;
+      renderDashboard(staticDashboard);
+      return;
+    }
+    const reason = error instanceof Error ? error.message : String(error);
+    setStatus('Backend unavailable', `${reason}. Static Pages supports Bodega Ben ${titleCase(DEFAULT_TIME_CLASS)} only.`, '');
   } finally {
     setBusy(false);
   }
+}
+
+async function hydrateStaticDashboard() {
+  const payload = await loadStaticDashboard();
+  if (!payload) return;
+  syncForms(payload.username, payload.time_class, DEFAULT_ARCHIVE_MONTHS);
+  activePayload = payload;
+  renderDashboard(payload);
+}
+
+async function loadStaticDashboard() {
+  if (staticPayload !== undefined) return staticPayload;
+  try {
+    const response = await fetch(STATIC_DASHBOARD_URL, { cache: 'no-store' });
+    if (!response.ok) {
+      staticPayload = null;
+      return null;
+    }
+    staticPayload = (await response.json()) as DashboardPayload;
+    return staticPayload;
+  } catch {
+    staticPayload = null;
+    return null;
+  }
+}
+
+function isStaticDashboardRequest(
+  payload: DashboardPayload,
+  username: string,
+  timeClass: TimeClass,
+  maxArchives: number
+) {
+  return (
+    username.toLowerCase() === payload.username.toLowerCase()
+    && timeClass === payload.time_class
+    && maxArchives === DEFAULT_ARCHIVE_MONTHS
+  );
 }
 
 async function pollJob(jobId: string) {
